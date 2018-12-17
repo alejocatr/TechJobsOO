@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TechJobs.Data;
+using TechJobs.Models;
 using TechJobs.ViewModels;
+
+
 
 namespace TechJobs.Controllers
 {
@@ -19,13 +22,21 @@ namespace TechJobs.Controllers
         public IActionResult Index(int id)
         {
             // TODO #1 - get the Job with the given ID and pass it into the view
+            Job theJob = jobData.Find(id);
+            NewJobViewModel theRealJob = new NewJobViewModel();
 
-            return View();
+            theRealJob.Name = theJob.Name;
+            theRealJob.EmployerID = theJob.Employer.ID;
+            theRealJob.CoreCompetencyID = theJob.CoreCompetency.ID;
+            theRealJob.LocationID = theJob.Location.ID;
+            theRealJob.PositionTypeID = theJob.PositionType.ID;
+            return View(theJob);
         }
 
         public IActionResult New()
         {
             NewJobViewModel newJobViewModel = new NewJobViewModel();
+
             return View(newJobViewModel);
         }
 
@@ -35,8 +46,26 @@ namespace TechJobs.Controllers
             // TODO #6 - Validate the ViewModel and if valid, create a 
             // new Job and add it to the JobData data store. Then
             // redirect to the Job detail (Index) action/view for the new Job.
+            JobData jobData = JobData.GetInstance();
+            if (ModelState.IsValid)
+            {
+                Job newjob = new Job
+                {
+                    Name = newJobViewModel.Name,
+                    Employer = jobData.Employers.Find(newJobViewModel.EmployerID),
+                    Location = jobData.Locations.Find(newJobViewModel.LocationID),
+                    CoreCompetency = jobData.CoreCompetencies.Find(newJobViewModel.CoreCompetencyID),
+                    PositionType = jobData.PositionTypes.Find(newJobViewModel.PositionTypeID)
+                };
+                jobData.Jobs.Add(newjob);
 
-            return View(newJobViewModel);
+                return Redirect(string.Format("/Job?id={0}", newjob.ID));
+            }
+            else
+            {
+
+                return View(newJobViewModel);
+            }
         }
     }
 }
